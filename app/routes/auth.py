@@ -189,3 +189,129 @@ async def change_password(
         )
 
     return {"message": "Password changed successfully"}
+
+
+# ============ FORGOT PASSWORD ============
+
+from pydantic import BaseModel, EmailStr
+from datetime import datetime, timedelta
+import secrets
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    """
+    Gui email OTP reset password
+    """
+    db = get_database()
+    
+    user = UserModel.find_by_email(db, data.email)
+    if not user:
+        return {"message": "Neu email ton tai, ban se nhan duoc ma OTP"}
+    
+    # Tao OTP 6 so
+    import random
+    otp_code = str(random.randint(100000, 999999))
+    expires_at = datetime.utcnow() + timedelta(minutes=5)
+    
+    # Luu OTP vao DB
+    db.password_resets.delete_many({"email": data.email})
+    db.password_resets.insert_one({
+        "email": data.email,
+        "otp": otp_code,
+        "expires_at": expires_at,
+        "created_at": datetime.utcnow()
+    })
+    
+    # Gui email
+    from app.utils.email import email_service
+    email_sent = email_service.send_reset_password_email(data.email, otp_code)
+    
+    if not email_sent:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Khong the gui email. Vui long thu lai sau."
+        )
+    
+    return {"message": "Da gui ma OTP. Vui long kiem tra email."}
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    """
+    Dat lai mat khau bang OTP
+    """
+    db = get_database()
+    
+    # Tim OTP
+    reset_record = db.password_resets.find_one({
+        "email": data.email,
+        "otp": data.otp
+    })
+    
+    if not reset_record:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ma OTP khong dung"
+        )
+    
+    # Kiem tra het han
+    if reset_record["expires_at"] < datetime.utcnow():
+        db.password_resets.delete_one({"email": data.email})
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ma OTP da het han"
+        )
+    
+    # Tim user
+    user = UserModel.find_by_email(db, data.email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User khong ton tai"
+        )
+    
+    # Doi mat khau
+    success = UserModel.update_password(db, str(user["_id"]), data.new_password)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Khong the doi mat khau"
+        )
+    
+    # Xoa OTP
+    db.password_resets.delete_one({"email": data.email})
+    
+    return {"message": "Doi mat khau thanh cong. Vui long dang nhap lai."}
+
+
+@router.post("/verify-otp")
+async def verify_otp(email: EmailStr, otp: str):
+    """
+    Kiem tra OTP con hop le khong
+    """
+    db = get_database()
+    
+    reset_record = db.password_resets.find_one({
+        "email": email,
+        "otp": otp
+    })
+    
+    if not reset_record:
+        return {"valid": False, "message": "Ma OTP khong dung"}
+    
+    if reset_record["expires_at"] < datetime.utcnow():
+        return {"valid": False, "message": "Ma OTP da het han"}
+    
+    return {"valid": True, "message": "OTP hop le"}

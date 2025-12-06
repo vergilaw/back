@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str = "your-gemini-api-key"
 
+    # SMTP Email (Gmail)
+    SMTP_EMAIL: str = "your-email@gmail.com"
+    SMTP_PASSWORD: str = "your-app-password"
+
     class Config:
         env_file = "app/.env"
         extra = "ignore"
