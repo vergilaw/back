@@ -38,6 +38,18 @@ def create_indexes():
     db.orders.create_index("status")
     db.orders.create_index("created_at")
 
+    db.ingredients.create_index("name")
+    db.ingredients.create_index("is_active")
+
+    db.reviews.create_index("product_id")
+    db.reviews.create_index("user_id")
+    db.reviews.create_index("is_approved")
+
+    db.recipes.create_index("product_id", unique=True)
+
+    db.stock_history.create_index("ingredient_id")
+    db.stock_history.create_index("created_at")
+
     print("Database indexes created")
 
 
