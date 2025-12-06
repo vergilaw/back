@@ -14,7 +14,7 @@ def connect_to_mongo():
         client = MongoClient(settings.MONGODB_URL)
         client.admin.command('ping')
         db = client[settings.MONGODB_DB_NAME]
-        print(f"✅ Connected to MongoDB: {settings.MONGODB_DB_NAME}")
+        print(f"Connected to MongoDB: {settings.MONGODB_DB_NAME}")
 
         create_indexes()
 
@@ -33,6 +33,10 @@ def create_indexes():
     db.products.create_index("category")
     db.products.create_index("name")
     db.products.create_index("is_available")
+
+    db.orders.create_index("user_id")
+    db.orders.create_index("status")
+    db.orders.create_index("created_at")
 
     print("Database indexes created")
 

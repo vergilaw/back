@@ -16,7 +16,7 @@ class OrderCreate(BaseModel):
     shipping_address: str = Field(..., min_length=10)
     phone: str = Field(..., min_length=10, max_length=15)
     note: Optional[str] = None
-    payment_method: str = "cod"  # cod, vnpay
+    payment_method: str = "cod"  # cod, payos
 
 
 class OrderResponse(BaseModel):

@@ -23,6 +23,37 @@ dist-ssr
 *.sln
 *.sw?
 
-
+# Environment variables - QUAN TRỌNG: KHÔNG COMMIT!
 .env
+.env.local
+.env.production
+.env.*.local
+app/.env
+**/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv/
+*.egg-info/
+.eggs/
+*.egg
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ngrok
+ngrok.yml
 

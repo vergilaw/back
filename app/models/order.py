@@ -16,7 +16,7 @@ class OrderModel:
 
     # Payment methods
     PAYMENT_COD = "cod"                  # Thanh toán khi nhận hàng
-    PAYMENT_VNPAY = "vnpay"              # VNPay
+    PAYMENT_PAYOS = "payos"              # PayOS
 
     @staticmethod
     def create_order(db, order_data: dict) -> dict:

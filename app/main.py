@@ -93,7 +93,9 @@ async def root():
             "User Authentication (Admin & User roles)",
             "Product Management (CRUD)",
             "Category Management",
-            "Search & Filter Products"
+            "Search & Filter Products",
+            "Orders Management",
+            "VNPay Payment Integration"
         ],
         "default_admin": {
             "email": "admin111@sweetbakery.com",
