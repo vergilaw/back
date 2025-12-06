@@ -31,6 +31,23 @@ class ProductUpdate(BaseModel):
     is_available: Optional[bool] = None
 
 
+class RecipeIngredientInfo(BaseModel):
+    name: str
+    quantity: float
+    unit: str
+
+
+class RecipeInfo(BaseModel):
+    ingredients: List[RecipeIngredientInfo]
+    instructions: str = ""
+    origin: str = ""
+    story: str = ""
+    history: str = ""
+    prep_time: int = 0
+    cook_time: int = 0
+    servings: int = 1
+
+
 class ProductResponse(BaseModel):
     id: str
     name: str
@@ -42,3 +59,8 @@ class ProductResponse(BaseModel):
     is_available: bool
     created_at: datetime
     updated_at: datetime
+
+
+class ProductDetailResponse(ProductResponse):
+    """Product with recipe info"""
+    recipe: Optional[RecipeInfo] = None

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List, Optional
-from app.schemas.product import (ProductCreate, ProductUpdate, ProductResponse, CategoryResponse)
+from bson import ObjectId
+from app.schemas.product import (ProductCreate, ProductUpdate, ProductResponse, ProductDetailResponse, CategoryResponse)
 from app.models.product import ProductModel, CategoryModel
 from app.utils.dependencies import require_admin, get_current_active_user
 from app.database import get_database
@@ -84,9 +85,13 @@ async def count_products(category: Optional[str] = None):
     return {"count": count, "category": category or "all"}
 
 
-@router.get("/{product_id}", response_model=ProductResponse)
+@router.get("/{product_id}", response_model=ProductDetailResponse)
 async def get_product(product_id: str):
-
+    """
+    Get product detail with recipe info (Public)
+    
+    Returns product info + recipe (ingredients, story, origin, history)
+    """
     db = get_database()
     product = ProductModel.find_by_id(db, product_id)
 
@@ -96,7 +101,38 @@ async def get_product(product_id: str):
             detail="Product not found"
         )
 
-    return ProductModel.product_to_dict(product)
+    result = ProductModel.product_to_dict(product)
+    
+    # Lấy recipe của sản phẩm
+    from app.models.recipe import RecipeModel
+    recipe = RecipeModel.find_by_product(db, product_id)
+    
+    if recipe:
+        # Lấy tên nguyên liệu
+        ingredients_detail = []
+        for item in recipe.get("ingredients", []):
+            ingredient = db.ingredients.find_one({"_id": ObjectId(item["ingredient_id"])})
+            if ingredient:
+                ingredients_detail.append({
+                    "name": ingredient["name"],
+                    "quantity": item["quantity"],
+                    "unit": item["unit"]
+                })
+        
+        result["recipe"] = {
+            "ingredients": ingredients_detail,
+            "instructions": recipe.get("instructions", ""),
+            "origin": recipe.get("origin", ""),
+            "story": recipe.get("story", ""),
+            "history": recipe.get("history", ""),
+            "prep_time": recipe.get("prep_time", 0),
+            "cook_time": recipe.get("cook_time", 0),
+            "servings": recipe.get("servings", 1)
+        }
+    else:
+        result["recipe"] = None
+
+    return result
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
