@@ -1,11 +1,16 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List, Optional
-from app.schemas.product import (ProductCreate, ProductUpdate, ProductResponse, CategoryResponse)
+from bson import ObjectId
+from app.schemas.product import (
+    ProductCreate, ProductUpdate, ProductResponse,
+    ProductDetailResponse, CategoryResponse
+)
 from app.models.product import ProductModel, CategoryModel
 from app.utils.dependencies import require_admin, get_current_active_user
 from app.database import get_database
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
+
 
 @router.get("/categories", response_model=List[CategoryResponse])
 async def get_categories():
@@ -14,15 +19,16 @@ async def get_categories():
     Categories are dynamically generated from products in database
     """
     db = get_database()
-    categories = CategoryModel.get_all_categories(db)  # ← Changed method name
+    categories = CategoryModel.get_all_categories(db)
     return categories
+
 
 @router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 async def create_product(
         product: ProductCreate,
         admin_user: dict = Depends(require_admin)
 ):
-
+    """Create new product (Admin only)"""
     db = get_database()
 
     valid_categories = ["birthday-cakes", "bread-savory", "cookies-minicakes", "beverages"]
@@ -42,7 +48,7 @@ async def create_product(
         product.badge = product.badge.upper()
 
     new_product = ProductModel.create_product(db, product.dict())
-    return ProductModel.product_to_dict(new_product)
+    return ProductModel.product_to_dict(new_product, db)  # ← THÊM db
 
 
 @router.get("", response_model=List[ProductResponse])
@@ -68,7 +74,7 @@ async def get_products(
         category=category,
         search=search
     )
-    return [ProductModel.product_to_dict(p) for p in products]
+    return [ProductModel.product_to_dict(p, db) for p in products]  # ← THÊM db
 
 
 @router.get("/count")
@@ -84,9 +90,13 @@ async def count_products(category: Optional[str] = None):
     return {"count": count, "category": category or "all"}
 
 
-@router.get("/{product_id}", response_model=ProductResponse)
+@router.get("/{product_id}", response_model=ProductDetailResponse)
 async def get_product(product_id: str):
+    """
+    Get product detail with recipe info (Public)
 
+    Returns product info + recipe (ingredients, story, origin, history)
+    """
     db = get_database()
     product = ProductModel.find_by_id(db, product_id)
 
@@ -96,7 +106,38 @@ async def get_product(product_id: str):
             detail="Product not found"
         )
 
-    return ProductModel.product_to_dict(product)
+    result = ProductModel.product_to_dict(product, db)  # ← THÊM db
+
+    # Lấy recipe của sản phẩm
+    from app.models.recipe import RecipeModel
+    recipe = RecipeModel.find_by_product(db, product_id)
+
+    if recipe:
+        # Lấy tên nguyên liệu
+        ingredients_detail = []
+        for item in recipe.get("ingredients", []):
+            ingredient = db.ingredients.find_one({"_id": ObjectId(item["ingredient_id"])})
+            if ingredient:
+                ingredients_detail.append({
+                    "name": ingredient["name"],
+                    "quantity": item["quantity"],
+                    "unit": item["unit"]
+                })
+
+        result["recipe"] = {
+            "ingredients": ingredients_detail,
+            "instructions": recipe.get("instructions", ""),
+            "origin": recipe.get("origin", ""),
+            "story": recipe.get("story", ""),
+            "history": recipe.get("history", ""),
+            "prep_time": recipe.get("prep_time", 0),
+            "cook_time": recipe.get("cook_time", 0),
+            "servings": recipe.get("servings", 1)
+        }
+    else:
+        result["recipe"] = None
+
+    return result
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
@@ -105,9 +146,7 @@ async def update_product(
         product_update: ProductUpdate,
         admin_user: dict = Depends(require_admin)
 ):
-    """
-    Update product (Admin only)
-    """
+    """Update product (Admin only)"""
     db = get_database()
 
     update_data = {k: v for k, v in product_update.dict().items() if v is not None}
@@ -143,7 +182,7 @@ async def update_product(
             detail="Product not found"
         )
 
-    return ProductModel.product_to_dict(updated_product)
+    return ProductModel.product_to_dict(updated_product, db)  # ← THÊM db
 
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -166,3 +205,35 @@ async def delete_product(
         )
 
     return None
+
+
+# ← THÊM ENDPOINT MỚI
+@router.get("/{product_id}/check-ingredients")
+async def check_product_ingredients(
+        product_id: str,
+        quantity: int = Query(1, ge=1),
+        current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Kiểm tra tồn kho nguyên liệu cho sản phẩm (User phải login)
+
+    - **product_id**: ID sản phẩm
+    - **quantity**: Số lượng sản phẩm muốn làm (default: 1)
+
+    Returns:
+    - available: bool (có đủ nguyên liệu không)
+    - missing: List[dict] (nguyên liệu thiếu hụt nếu có)
+    """
+    db = get_database()
+    result = ProductModel.check_ingredients_availability(db, product_id, quantity)
+
+    if not result["available"]:
+        return {
+            **result,
+            "message": f"Not enough ingredients to make {quantity} unit(s)"
+        }
+
+    return {
+        **result,
+        "message": f"All ingredients available for {quantity} unit(s)"
+    }
