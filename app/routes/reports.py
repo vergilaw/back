@@ -239,7 +239,7 @@ async def get_orders_summary(
 async def get_inventory_summary(
     admin: dict = Depends(get_current_active_admin)
 ):
-    """Tổng quan tồn kho"""
+    """Tong quan ton kho"""
     db = get_database()
     
     ingredients = list(db.ingredients.find({"is_active": True}))
@@ -258,4 +258,110 @@ async def get_inventory_summary(
             "min_quantity": i["min_quantity"],
             "unit": i["unit"]
         } for i in low_stock]
+    }
+
+
+@router.get("/inventory-detail")
+async def get_inventory_detail(
+    admin: dict = Depends(get_current_active_admin)
+):
+    """Bao cao ton kho chi tiet"""
+    db = get_database()
+    
+    ingredients = list(db.ingredients.find({"is_active": True}).sort("name", 1))
+    
+    result = []
+    total_value = 0
+    
+    for i in ingredients:
+        value = i["quantity"] * i["price_per_unit"]
+        total_value += value
+        
+        # Tinh luong nhap/xuat trong thang
+        from datetime import datetime, timedelta
+        month_ago = datetime.utcnow() - timedelta(days=30)
+        
+        import_qty = 0
+        export_qty = 0
+        history = list(db.stock_history.find({
+            "ingredient_id": i["_id"],
+            "created_at": {"$gte": month_ago}
+        }))
+        
+        for h in history:
+            if h["type"] == "import":
+                import_qty += h["quantity"]
+            else:
+                export_qty += h["quantity"]
+        
+        result.append({
+            "id": str(i["_id"]),
+            "name": i["name"],
+            "unit": i["unit"],
+            "quantity": i["quantity"],
+            "min_quantity": i["min_quantity"],
+            "price_per_unit": i["price_per_unit"],
+            "total_value": value,
+            "supplier": i.get("supplier", ""),
+            "is_low_stock": i["quantity"] <= i["min_quantity"],
+            "monthly_import": import_qty,
+            "monthly_export": export_qty,
+            "monthly_usage_rate": round(export_qty / 30, 2) if export_qty > 0 else 0
+        })
+    
+    return {
+        "total_items": len(result),
+        "total_value": total_value,
+        "items": result
+    }
+
+
+@router.get("/inventory-movement")
+async def get_inventory_movement(
+    ingredient_id: Optional[str] = None,
+    days: int = Query(30, ge=1, le=365),
+    admin: dict = Depends(get_current_active_admin)
+):
+    """Lich su nhap xuat kho"""
+    db = get_database()
+    from datetime import datetime, timedelta
+    
+    start_date = datetime.utcnow() - timedelta(days=days)
+    
+    query = {"created_at": {"$gte": start_date}}
+    if ingredient_id:
+        query["ingredient_id"] = ObjectId(ingredient_id)
+    
+    history = list(
+        db.stock_history
+        .find(query)
+        .sort("created_at", -1)
+        .limit(100)
+    )
+    
+    # Tinh tong nhap/xuat
+    total_import = sum(h["quantity"] for h in history if h["type"] == "import")
+    total_export = sum(h["quantity"] for h in history if h["type"] == "export")
+    
+    # Lay ten nguyen lieu
+    result = []
+    for h in history:
+        ingredient = db.ingredients.find_one({"_id": h["ingredient_id"]})
+        result.append({
+            "id": str(h["_id"]),
+            "ingredient_id": str(h["ingredient_id"]),
+            "ingredient_name": ingredient["name"] if ingredient else "N/A",
+            "type": h["type"],
+            "quantity": h["quantity"],
+            "before": h["before"],
+            "after": h["after"],
+            "note": h.get("note", ""),
+            "created_at": h["created_at"]
+        })
+    
+    return {
+        "period_days": days,
+        "total_import": total_import,
+        "total_export": total_export,
+        "movements": result
     }
