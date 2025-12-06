@@ -1,0 +1,255 @@
+.menu-page {
+  min-height: 100vh;
+}
+
+/* ===== PAGE BANNER ===== */
+.page-banner {
+  background: linear-gradient(135deg, #E8B4A8 0%, #D4A59A 100%);  /* Bakery colors */
+  padding: 60px 24px;
+}
+
+.page-banner-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 72px;
+  font-weight: 900;
+  color: white;
+  margin: 0;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.breadcrumb a {
+  color: white;
+  text-decoration: none;
+}
+
+.separator {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== MENU SECTION BASE ===== */
+.menu-section {
+  padding: 100px 24px;
+}
+
+.menu-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px 60px;
+}
+
+.menu-category {
+  display: flex;
+  flex-direction: column;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(232, 180, 168, 0.3);
+}
+
+.category-icon {
+  font-size: 48px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-title {
+  font-size: 42px;
+  font-weight: 900;
+  margin: 0;
+  font-family: 'Georgia', serif;
+}
+
+.category-title .highlight {
+  color: #E8B4A8;  /* Bakery pink */
+  font-style: italic;
+}
+
+.menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.item-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.item-icon {
+  font-size: 24px;
+}
+
+.item-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.item-badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.badge-special {
+  background: #E8B4A8;
+  color: #3E2723;
+}
+
+.badge-new {
+  background: #4CAF50;
+  color: white;
+}
+
+.badge-popular {
+  background: #FF9800;
+  color: white;
+}
+
+.badge-bestseller {
+  background: #F44336;
+  color: white;
+}
+
+.badge-healthy {
+  background: #81C784;
+  color: white;
+}
+
+.item-dots {
+  flex: 1;
+  height: 1px;
+  margin: 0 12px;
+}
+
+.item-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #E8B4A8;  /* Bakery pink */
+  font-family: 'Georgia', serif;
+}
+
+.item-description {
+  font-size: 14px;
+  margin: 0;
+  padding-left: 36px;
+}
+
+/* ===== MENU SECTION DARK (NỀN TỐI) ===== */
+.menu-section-dark {
+  background: #8B6F5C;  /* Milk Brown */
+}
+
+.menu-section-dark .category-icon {
+  background: rgba(232, 180, 168, 0.15);
+}
+
+.menu-section-dark .category-title {
+  color: white;
+}
+
+.menu-section-dark .item-name {
+  color: white;
+}
+
+.menu-section-dark .item-dots {
+  background: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.3) 0px,
+    rgba(255, 255, 255, 0.3) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.menu-section-dark .item-description {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== MENU SECTION LIGHT (NỀN SÁNG) ===== */
+.menu-section-light {
+  background: #F5EDE4;  /* Cream background */
+}
+
+.menu-section-light .category-icon {
+  background: rgba(232, 180, 168, 0.2);
+}
+
+.menu-section-light .category-title {
+  color: #3E2723;
+}
+
+.menu-section-light .item-name {
+  color: #3E2723;
+}
+
+.menu-section-light .item-dots {
+  background: repeating-linear-gradient(
+    to right,
+    rgba(62, 39, 35, 0.2) 0px,
+    rgba(62, 39, 35, 0.2) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.menu-section-light .item-description {
+  color: rgba(62, 39, 35, 0.6);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 968px) {
+  .menu-container {
+    grid-template-columns: 1fr;
+    gap: 60px;
+  }
+
+  .page-title {
+    font-size: 48px;
+  }
+
+  .category-title {
+    font-size: 32px;
+  }
+}

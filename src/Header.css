@@ -1,0 +1,177 @@
+.header {
+  background: #8B6F5C;  /* Nâu sữa - Bakery theme */
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(232, 180, 168, 0.2);
+  transition: transform 0.3s ease;
+}
+
+/* Header hiển thị */
+.header-visible {
+  transform: translateY(0);
+}
+
+/* Header ẩn (trượt lên trên) */
+.header-hidden {
+  transform: translateY(-100%);
+}
+
+.header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80px;
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  transition: transform 0.2s;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+.logo-icon {
+  font-size: 36px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.logo-text {
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  color: #FFF3E0;  /* Kem sáng */
+}
+
+/* Navigation */
+.nav {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.nav-link {
+  color: rgba(255, 243, 224, 0.9);
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: color 0.2s;
+  position: relative;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #E8B4A8;  /* Hồng phấn */
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #E8B4A8;
+}
+
+/* Actions */
+.header-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.phone-btn {
+  background: #E8B4A8;  /* Hồng phấn */
+  color: #3E2723;  /* Nâu sô-cô-la */
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(232, 180, 168, 0.3);
+}
+
+.phone-btn:hover {
+  background: #D4A59A;  /* Hồng đào */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(232, 180, 168, 0.4);
+}
+
+.cart-btn {
+  color: #FFF3E0;
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.cart-btn:hover {
+  background: rgba(232, 180, 168, 0.15);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #E8B4A8;
+  color: #3E2723;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(232, 180, 168, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .nav {
+    gap: 16px;
+  }
+  
+  .nav-link {
+    font-size: 14px;
+  }
+
+  .phone-btn {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+  }
+
+  .logo-text {
+    font-size: 18px;
+  }
+}
