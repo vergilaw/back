@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.database import connect_to_mongo, close_mongo_connection
-from app.routes import auth, products, questions, orders, payments, ingredients, reviews, recipes, reports, delivery, admin
+from app.routes import auth, products, questions, orders, payments, ingredients, reviews, recipes, reports, delivery, admin, chatbot
 from app.config import settings
 from app.models.user import UserModel
 from app.utils.security import verify_password
@@ -88,6 +88,7 @@ app.include_router(recipes.router)
 app.include_router(reports.router)
 app.include_router(delivery.router)
 app.include_router(admin.router)
+app.include_router(chatbot.router)
 
 @app.get("/")
 async def root():
