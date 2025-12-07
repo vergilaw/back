@@ -1,18 +1,55 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Header from './Header'
 import SocialSidebar from './SocialSidebar'
 import ChatButton from './ChatButton'
 import Footer from './Footer'
+import { useAuth } from './contexts/AuthContext'
+import { useCart } from './contexts/CartContext'
+import LoginModal from './LoginModal'
+import Toast from './Toast'
 import './ShopPage.css'
 
+const API_URL = 'http://localhost:8000/api'
+
 export default function ShopPage() {
+  const { user } = useAuth()
+  const { addToCart } = useCart()
+  const [showLogin, setShowLogin] = useState(false)
+  const [addingId, setAddingId] = useState(null)
+  const [toast, setToast] = useState(null)
   const [viewMode, setViewMode] = useState(4)
   const [itemsPerPage, setItemsPerPage] = useState(12)
   const [sortBy, setSortBy] = useState('default')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // ===== DATA TĨNH - 4 CATEGORIES =====
+  // Fetch products from API
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch(`${API_URL}/products?limit=100`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.length > 0) {
+          setProducts(data)
+          setLoading(false)
+          return
+        }
+      }
+    } catch (err) {
+      console.log('API not available, using static data')
+    }
+    // Fallback to static data
+    setProducts(staticProducts)
+    setLoading(false)
+  }
+
+  // ===== STATIC DATA FALLBACK =====
   const categories = [
     { id: 'all', name: 'All Products', count: 0 },
     { id: 'birthday-cakes', name: 'Birthday Cakes', count: 0 },
@@ -21,7 +58,7 @@ export default function ShopPage() {
     { id: 'beverages', name: 'Beverages', count: 0 }
   ]
 
-  const allProducts = [
+  const staticProducts = [
     // ===== BIRTHDAY CAKES =====
     { 
       id: 1, 
@@ -214,7 +251,7 @@ export default function ShopPage() {
       image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=80'
     },
     { 
-      id: 24, 
+      id: '24', 
       name: 'Berry Smoothie', 
       price: 6.50, 
       category: 'beverages',
@@ -223,18 +260,37 @@ export default function ShopPage() {
     }
   ]
 
+  if (loading) {
+    return (
+      <div className="shop-page">
+        <Header />
+        <section className="page-banner">
+          <div className="page-banner-container">
+            <h1 className="page-title">Shop</h1>
+          </div>
+        </section>
+        <section className="shop-section">
+          <div className="shop-container">
+            <p style={{color: 'white', textAlign: 'center', padding: '3rem'}}>Loading products...</p>
+          </div>
+        </section>
+        <Footer />
+      </div>
+    )
+  }
+
   // Đếm số sản phẩm mỗi category
   const categoriesWithCount = categories.map(cat => ({
     ...cat,
     count: cat.id === 'all' 
-      ? allProducts.length 
-      : allProducts.filter(p => p.category === cat.id).length
+      ? products.length 
+      : products.filter(p => p.category === cat.id).length
   }))
 
   // Filter theo category
   const filteredProducts = selectedCategory === 'all'
-    ? allProducts
-    : allProducts.filter(p => p.category === selectedCategory)
+    ? products
+    : products.filter(p => p.category === selectedCategory)
 
   // Sorting
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -262,6 +318,35 @@ export default function ShopPage() {
   const handleCategoryChange = (categoryId) => {
     setSelectedCategory(categoryId)
     setCurrentPage(1) // Reset to page 1
+  }
+
+  // Check if using API data (has MongoDB ObjectId format)
+  const isApiData = products.length > 0 && typeof products[0].id === 'string' && products[0].id.length === 24
+
+  // Show toast notification
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type })
+  }
+
+  // Handle add to cart
+  const handleAddToCart = async (product) => {
+    if (!user) {
+      setShowLogin(true)
+      return
+    }
+    if (!isApiData) {
+      showToast('Demo mode: Please add products to database first', 'warning')
+      return
+    }
+    setAddingId(product.id)
+    try {
+      await addToCart(product.id, 1)
+      showToast(`${product.name} đã thêm vào giỏ hàng!`, 'success')
+    } catch (err) {
+      showToast(err.message, 'error')
+    } finally {
+      setAddingId(null)
+    }
   }
 
   return (
@@ -374,6 +459,13 @@ export default function ShopPage() {
                 <div key={product.id} className="product-card">
                   <div className="product-image-wrapper">
                     <img src={product.image} alt={product.name} className="product-image" />
+                    <button 
+                      className="add-to-cart-btn"
+                      onClick={() => handleAddToCart(product)}
+                      disabled={addingId === product.id}
+                    >
+                      {addingId === product.id ? '...' : '🛒 Add to Cart'}
+                    </button>
                   </div>
                   <div className="product-info">
                     <h3 className="product-name">{product.name}</h3>
@@ -427,6 +519,14 @@ export default function ShopPage() {
       <SocialSidebar />
       <ChatButton />
       <Footer />
+      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   )
 }

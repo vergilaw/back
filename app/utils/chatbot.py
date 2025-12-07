@@ -99,11 +99,53 @@ class ChatbotService:
         }).limit(limit))
         
         return [{
+            "id": str(p["_id"]),
             "name": p["name"],
             "price": p["price"],
             "category": p["category"],
             "description": p.get("description", "")[:100]
         } for p in products]
+
+    def detect_products_in_message(self, message: str) -> list:
+        """Phát hiện sản phẩm được nhắc đến trong tin nhắn"""
+        db = get_database()
+        message_lower = message.lower()
+        
+        # Lấy tất cả sản phẩm
+        all_products = list(db.products.find({"is_available": True}))
+        
+        detected = []
+        for p in all_products:
+            product_name = p["name"].lower()
+            # Kiểm tra tên sản phẩm có trong tin nhắn không
+            # Tách từng từ trong tên sản phẩm để match linh hoạt hơn
+            name_words = product_name.split()
+            
+            # Match nếu tên đầy đủ hoặc >= 2 từ khớp
+            if product_name in message_lower:
+                detected.append({
+                    "id": str(p["_id"]),
+                    "name": p["name"],
+                    "price": p["price"],
+                    "category": p["category"],
+                    "image": p.get("image", ""),
+                    "match_score": 100
+                })
+            elif len(name_words) >= 2:
+                matched_words = sum(1 for w in name_words if w in message_lower and len(w) > 2)
+                if matched_words >= 2:
+                    detected.append({
+                        "id": str(p["_id"]),
+                        "name": p["name"],
+                        "price": p["price"],
+                        "category": p["category"],
+                        "image": p.get("image", ""),
+                        "match_score": matched_words * 30
+                    })
+        
+        # Sắp xếp theo match_score
+        detected.sort(key=lambda x: x["match_score"], reverse=True)
+        return detected[:3]  # Trả về tối đa 3 sản phẩm
 
     def get_bestsellers(self, limit: int = 3) -> list:
         """Lấy sản phẩm bán chạy"""
@@ -240,13 +282,17 @@ Trả lời:"""
     async def chat(self, message: str, user_id: Optional[str] = None) -> dict:
         """Main chat function - Hybrid approach"""
         
+        # 0. Phát hiện sản phẩm trong tin nhắn
+        detected_products = self.detect_products_in_message(message)
+        
         # 1. Check rule-based first
         intent = self.detect_intent(message)
         if intent:
             return {
                 "response": self.get_rule_response(intent),
                 "intent": intent,
-                "source": "rule"
+                "source": "rule",
+                "products": detected_products
             }
         
         # 2. Fallback to RAG
@@ -254,7 +300,8 @@ Trả lời:"""
         return {
             "response": response,
             "intent": "rag",
-            "source": "gemini"
+            "source": "gemini",
+            "products": detected_products
         }
 
 
