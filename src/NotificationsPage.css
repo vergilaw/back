@@ -1,0 +1,67 @@
+.notifications-page {
+  min-height: 100vh;
+}
+
+.notifications-section {
+  padding: 60px 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.notifications-container {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.refresh-btn {
+  background: #8B6F5C;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.notification-card {
+  border: 1px solid #E8B4A8;
+  border-radius: 8px;
+  padding: 20px;
+  background: #FFF8F5;
+}
+
+.notification-card h4 {
+  color: #8B6F5C;
+  margin-bottom: 8px;
+}
+
+.question-text {
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.status {
+  font-weight: 600;
+  color: #8B6F5C;
+}
+
+.answer-box {
+  margin-top: 12px;
+  padding: 12px;
+  background: white;
+  border-left: 3px solid #E8B4A8;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+  padding: 40px;
+}

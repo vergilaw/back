@@ -1,17 +1,25 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useCart } from './contexts/CartContext'
+import { useToast } from './contexts/ToastContext'
 import LoginModal from './LoginModal'
 import './Header.css'
 
 export default function Header() {
   const { user, logout } = useAuth()
   const { cartTotal } = useCart()
+  const toast = useToast()
   const [showLogin, setShowLogin] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+
+  const handleLogout = () => {
+    logout()
+    setShowUserMenu(false)
+    toast.info('Đã đăng xuất')
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,7 +79,7 @@ export default function Header() {
               {showUserMenu && (
                 <div className="user-dropdown">
                   <Link to="/my-orders" onClick={() => setShowUserMenu(false)}>My Orders</Link>
-                  <button onClick={() => { logout(); setShowUserMenu(false); }}>Logout</button>
+                  <button onClick={handleLogout}>Logout</button>
                 </div>
               )}
             </div>

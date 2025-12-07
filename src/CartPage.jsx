@@ -4,6 +4,7 @@ import Header from './Header'
 import Footer from './Footer'
 import { useAuth } from './contexts/AuthContext'
 import { useCart } from './contexts/CartContext'
+import { useToast } from './contexts/ToastContext'
 import LoginModal from './LoginModal'
 import './CartPage.css'
 
@@ -11,7 +12,13 @@ export default function CartPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { cart, cartTotal, loading, updateQuantity, removeFromCart } = useCart()
+  const toast = useToast()
   const [showLogin, setShowLogin] = useState(false)
+
+  const handleRemove = async (productId, productName) => {
+    await removeFromCart(productId)
+    toast.success(`Đã xóa ${productName} khỏi giỏ hàng`)
+  }
 
   if (!user) {
     return (
@@ -103,7 +110,7 @@ export default function CartPage() {
                         </td>
                         <td>${(item.product.price * item.quantity).toFixed(2)}</td>
                         <td>
-                          <button className="remove-btn" onClick={() => removeFromCart(item.product.id)}>×</button>
+                          <button className="remove-btn" onClick={() => handleRemove(item.product.id, item.product.name)}>×</button>
                         </td>
                       </tr>
                     ))}

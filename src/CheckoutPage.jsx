@@ -4,6 +4,7 @@ import Header from './Header'
 import Footer from './Footer'
 import { useAuth } from './contexts/AuthContext'
 import { useCart } from './contexts/CartContext'
+import { useToast } from './contexts/ToastContext'
 import './CheckoutPage.css'
 
 const API_URL = 'http://localhost:8000/api'
@@ -12,6 +13,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate()
   const { user, token } = useAuth()
   const { cart, cartTotal, clearCart, loading: cartLoading } = useCart()
+  const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
@@ -161,10 +163,12 @@ export default function CheckoutPage() {
         }
       }
 
-      // COD or PayOS failed - go to success page
+      // COD - go to success page
+      toast.success('Đặt hàng thành công!')
       navigate(`/order-success/${orderData.id}`)
 
     } catch (err) {
+      toast.error(err.message)
       setError(err.message)
     } finally {
       setLoading(false)

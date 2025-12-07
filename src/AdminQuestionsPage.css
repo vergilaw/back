@@ -1,0 +1,43 @@
+.admin-questions-page {
+  min-height: 100vh;
+}
+
+.questions-section {
+  padding: 60px 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.questions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.question-card {
+  background: #fff;
+  border: 1px solid #E8B4A8;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.reply-box {
+  margin-top: 16px;
+}
+
+.reply-box textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.reply-box button {
+  background: #8B6F5C;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}

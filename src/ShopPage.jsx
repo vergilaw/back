@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Header from './Header'
 import SocialSidebar from './SocialSidebar'
 import ChatButton from './ChatButton'
 import Footer from './Footer'
 import { useAuth } from './contexts/AuthContext'
 import { useCart } from './contexts/CartContext'
+import { useToast } from './contexts/ToastContext'
 import LoginModal from './LoginModal'
-import Toast from './Toast'
 import './ShopPage.css'
 
 const API_URL = 'http://localhost:8000/api'
@@ -14,9 +14,9 @@ const API_URL = 'http://localhost:8000/api'
 export default function ShopPage() {
   const { user } = useAuth()
   const { addToCart } = useCart()
+  const toast = useToast()
   const [showLogin, setShowLogin] = useState(false)
   const [addingId, setAddingId] = useState(null)
-  const [toast, setToast] = useState(null)
   const [viewMode, setViewMode] = useState(4)
   const [itemsPerPage, setItemsPerPage] = useState(12)
   const [sortBy, setSortBy] = useState('default')
@@ -323,11 +323,6 @@ export default function ShopPage() {
   // Check if using API data (has MongoDB ObjectId format)
   const isApiData = products.length > 0 && typeof products[0].id === 'string' && products[0].id.length === 24
 
-  // Show toast notification
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type })
-  }
-
   // Handle add to cart
   const handleAddToCart = async (product) => {
     if (!user) {
@@ -335,15 +330,15 @@ export default function ShopPage() {
       return
     }
     if (!isApiData) {
-      showToast('Demo mode: Please add products to database first', 'warning')
+      toast.warning('Demo mode: Please add products to database first')
       return
     }
     setAddingId(product.id)
     try {
       await addToCart(product.id, 1)
-      showToast(`${product.name} đã thêm vào giỏ hàng!`, 'success')
+      toast.success(`${product.name} đã thêm vào giỏ hàng!`)
     } catch (err) {
-      showToast(err.message, 'error')
+      toast.error(err.message)
     } finally {
       setAddingId(null)
     }
@@ -520,13 +515,6 @@ export default function ShopPage() {
       <ChatButton />
       <Footer />
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
-      {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
-        />
-      )}
     </div>
   )
 }
