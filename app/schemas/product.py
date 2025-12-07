@@ -62,6 +62,23 @@ class RecipeInfo(BaseModel):
     servings: int = 1
 
 
+class RecipeIngredientInfo(BaseModel):
+    name: str
+    quantity: float
+    unit: str
+
+
+class RecipeInfo(BaseModel):
+    ingredients: List[RecipeIngredientInfo]
+    instructions: str = ""
+    origin: str = ""
+    story: str = ""
+    history: str = ""
+    prep_time: int = 0
+    cook_time: int = 0
+    servings: int = 1
+
+
 class ProductResponse(BaseModel):
     id: str
     name: str

@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
+import { useCart } from './contexts/CartContext'
+import LoginModal from './LoginModal'
 import './Header.css'
 
 export default function Header() {
-  const [cartCount] = useState(0)
+  const { user, logout } = useAuth()
+  const { cartTotal } = useCart()
+  const [showLogin, setShowLogin] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
 
@@ -54,10 +60,29 @@ export default function Header() {
           </a>
           <Link to="/cart" className="cart-btn">
             🛒 CART
-            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+            {cartTotal.total_items > 0 && <span className="cart-badge">{cartTotal.total_items}</span>}
           </Link>
+          
+          {user ? (
+            <div className="user-menu-wrapper">
+              <button className="user-btn" onClick={() => setShowUserMenu(!showUserMenu)}>
+                👤 {user.full_name?.split(' ')[0] || 'Account'}
+              </button>
+              {showUserMenu && (
+                <div className="user-dropdown">
+                  <Link to="/my-orders" onClick={() => setShowUserMenu(false)}>My Orders</Link>
+                  <button onClick={() => { logout(); setShowUserMenu(false); }}>Logout</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button className="login-btn" onClick={() => setShowLogin(true)}>
+              Login
+            </button>
+          )}
         </div>
       </div>
+      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
     </header>
   )
 }
