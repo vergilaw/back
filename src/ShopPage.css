@@ -144,6 +144,13 @@
   border-color: #E8B4A8;
 }
 
+/* Dropdown options styling */
+.toolbar-select option {
+  background: #3E2723;
+  color: white;
+  padding: 10px;
+}
+
 /* ===== PRODUCT GRID ===== */
 .product-grid {
   display: grid;
