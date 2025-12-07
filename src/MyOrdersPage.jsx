@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
 import { useAuth } from './contexts/AuthContext'
+import { useToast } from './contexts/ToastContext'
+import ConfirmModal from './ConfirmModal'
 import './MyOrdersPage.css'
 
 const API_URL = 'http://localhost:8000/api'
@@ -10,8 +12,10 @@ const API_URL = 'http://localhost:8000/api'
 export default function MyOrdersPage() {
   const navigate = useNavigate()
   const { user, token } = useAuth()
+  const toast = useToast()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', orderId: null })
 
   useEffect(() => {
     if (!user) {
@@ -36,19 +40,54 @@ export default function MyOrdersPage() {
     }
   }
 
-  const cancelOrder = async (orderId) => {
-    if (!confirm('Are you sure you want to cancel this order?')) return
-    
-    try {
-      const res = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (res.ok) {
-        fetchOrders()
+  const openCancelModal = (orderId) => {
+    setConfirmModal({ isOpen: true, type: 'cancel', orderId })
+  }
+
+  const openDeleteModal = (orderId) => {
+    setConfirmModal({ isOpen: true, type: 'delete', orderId })
+  }
+
+  const closeModal = () => {
+    setConfirmModal({ isOpen: false, type: '', orderId: null })
+  }
+
+  const handleConfirm = async () => {
+    const { type, orderId } = confirmModal
+    closeModal()
+
+    if (type === 'cancel') {
+      try {
+        const res = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (res.ok) {
+          toast.success('Đã hủy đơn hàng')
+          fetchOrders()
+        } else {
+          const data = await res.json()
+          toast.error(data.detail || 'Không thể hủy đơn hàng')
+        }
+      } catch (err) {
+        toast.error('Lỗi khi hủy đơn hàng')
       }
-    } catch (err) {
-      console.error('Error cancelling order:', err)
+    } else if (type === 'delete') {
+      try {
+        const res = await fetch(`${API_URL}/orders/${orderId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (res.ok || res.status === 204) {
+          toast.success('Đã xóa đơn hàng')
+          fetchOrders()
+        } else {
+          const data = await res.json()
+          toast.error(data.detail || 'Không thể xóa đơn hàng')
+        }
+      } catch (err) {
+        toast.error('Lỗi khi xóa đơn hàng')
+      }
     }
   }
 
@@ -135,8 +174,13 @@ export default function MyOrdersPage() {
                     <div className="order-actions">
                       <Link to={`/order-success/${order.id}`} className="btn-view">View Details</Link>
                       {(order.status === 'pending' || order.status === 'paid') && (
-                        <button className="btn-cancel" onClick={() => cancelOrder(order.id)}>
+                        <button className="btn-cancel" onClick={() => openCancelModal(order.id)}>
                           Cancel Order
+                        </button>
+                      )}
+                      {order.status === 'cancelled' && (
+                        <button className="btn-delete" onClick={() => openDeleteModal(order.id)}>
+                          Delete
                         </button>
                       )}
                     </div>
@@ -149,6 +193,19 @@ export default function MyOrdersPage() {
       </section>
 
       <Footer />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.type === 'cancel' ? 'Hủy đơn hàng' : 'Xóa đơn hàng'}
+        message={confirmModal.type === 'cancel' 
+          ? 'Bạn có chắc muốn hủy đơn hàng này?' 
+          : 'Bạn có chắc muốn xóa đơn hàng này? Hành động này không thể hoàn tác.'}
+        confirmText={confirmModal.type === 'cancel' ? 'Hủy đơn' : 'Xóa'}
+        cancelText="Đóng"
+        type="danger"
+        onConfirm={handleConfirm}
+        onCancel={closeModal}
+      />
     </div>
   )
 }

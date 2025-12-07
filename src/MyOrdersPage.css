@@ -198,6 +198,21 @@
   background: #fee;
 }
 
+.btn-delete {
+  padding: 8px 16px;
+  background: #c00;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.btn-delete:hover {
+  background: #a00;
+}
+
 .btn-primary {
   display: inline-block;
   padding: 12px 30px;

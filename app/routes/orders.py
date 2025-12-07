@@ -122,6 +122,47 @@ async def cancel_order(
     return OrderModel.order_to_dict(cancelled)
 
 
+@router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_order(
+    order_id: str,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Delete a cancelled order (User can only delete their own cancelled orders)"""
+    db = get_database()
+    order = OrderModel.find_by_id(db, order_id)
+    
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+    
+    # Check ownership (admin can delete any)
+    if current_user["role"] != "admin" and str(order["user_id"]) != str(current_user["_id"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this order"
+        )
+    
+    # Only allow deleting cancelled orders (for users)
+    if current_user["role"] != "admin" and order.get("status") != "cancelled":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only cancelled orders can be deleted"
+        )
+    
+    from bson import ObjectId
+    result = db.orders.delete_one({"_id": ObjectId(order_id)})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete order"
+        )
+    
+    return None
+
+
 # ============ ADMIN ENDPOINTS ============
 
 @router.get("", response_model=List[OrderResponse])
