@@ -11,6 +11,7 @@ class ProductModel:
         """Create a new product"""
         product_doc = {
             **product_data,
+            "ingredients": product_data.get("ingredients", []),
             "is_available": True,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
@@ -89,10 +90,31 @@ class ProductModel:
             return False
 
     @staticmethod
-    def product_to_dict(product: dict) -> dict:
-        """Convert product document to dict"""
+    def product_to_dict(product: dict, db=None) -> dict:
+        """Convert product document to dict with ingredient details"""
         if not product:
             return None
+
+        # ← SỬA: if db and product.get → if db is not None and product.get
+        ingredient_details = []
+        if db is not None and product.get("ingredients"):
+            for ing_usage in product["ingredients"]:
+                ingredient = db.ingredients.find_one({
+                    "_id": ObjectId(ing_usage["ingredient_id"])
+                })
+
+                if ingredient:
+                    quantity_needed = ing_usage["quantity"]
+                    available_stock = ingredient["quantity"]
+
+                    ingredient_details.append({
+                        "ingredient_id": str(ingredient["_id"]),
+                        "name": ingredient["name"],
+                        "unit": ingredient["unit"],
+                        "quantity_needed": quantity_needed,
+                        "available_stock": available_stock,
+                        "is_sufficient": available_stock >= quantity_needed
+                    })
 
         return {
             "id": str(product["_id"]),
@@ -102,9 +124,48 @@ class ProductModel:
             "description": product["description"],
             "image": product.get("image", ""),
             "badge": product.get("badge"),
+            "ingredients": ingredient_details,
             "is_available": product.get("is_available", True),
             "created_at": product["created_at"],
             "updated_at": product["updated_at"]
+        }
+
+    @staticmethod
+    def check_ingredients_availability(db, product_id: str, quantity: int = 1) -> dict:
+        """
+        Kiểm tra xem có đủ nguyên liệu để làm sản phẩm không
+        Trả về: {available: bool, missing: [...]}
+        """
+        product = db.products.find_one({"_id": ObjectId(product_id)})
+
+        if not product or not product.get("ingredients"):
+            return {"available": True, "missing": []}
+
+        missing_ingredients = []
+
+        for ing_usage in product["ingredients"]:
+            ingredient = db.ingredients.find_one({
+                "_id": ObjectId(ing_usage["ingredient_id"])
+            })
+
+            if not ingredient:
+                continue
+
+            needed = ing_usage["quantity"] * quantity
+            available = ingredient["quantity"]
+
+            if available < needed:
+                missing_ingredients.append({
+                    "name": ingredient["name"],
+                    "needed": needed,
+                    "available": available,
+                    "shortage": needed - available,
+                    "unit": ingredient["unit"]
+                })
+
+        return {
+            "available": len(missing_ingredients) == 0,
+            "missing": missing_ingredients
         }
 
 
@@ -128,7 +189,6 @@ class CategoryModel:
 
         results = list(db.products.aggregate(pipeline))
 
-        # Category metadata (you can move this to a separate categories collection later)
         category_info = {
             "birthday-cakes": {
                 "name": "Birthday Cakes",
